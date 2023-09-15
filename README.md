@@ -1,2 +1,2 @@
 # Project
-Discord Bot Project
+Discord study Bot Project
