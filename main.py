@@ -14,15 +14,17 @@ async def on_ready():
     except Exception as e:
         print(e)
 
+#bot says hello to the user
 @client.tree.command(name="hello")
 async def hello(interaction: discord.Interaction):
     await interaction.response.send_message(f"Hey {interaction.user.mention}! This is GG study bot!",\
         ephemeral=True)
 
+#say command(kinda like tts)
 @client.tree.command(name="say")
-@app_commands.describe(arg="What should i say?")
-async def say(interaction: discord.Interaction, arg: str):
-    await interaction.response.send_message(f"{interaction.user.name} said: `{arg}`")
+@app_commands.describe(thingtosay="What should i say?")
+async def say(interaction: discord.Interaction, thingtosay: str):
+    await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
 client.run(config.TOKEN)
 
