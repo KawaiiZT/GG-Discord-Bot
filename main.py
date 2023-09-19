@@ -1,24 +1,28 @@
 import discord
+from discord import app_commands
 from discord.ext import commands
 import config
 
-intents = discord.Intents.default()
-intents.message_content = True
-client = commands.Bot(command_prefix='!', intents=intents)
+client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
 
 @client.event
 async def on_ready():
-    print("-----------------------------")
-    print("The bot is now ready for use!")
-    print("-----------------------------")
+    print("Bot is up and ready!")
+    try:
+        synced = await client.tree.sync()
+        print(f"Synced {len(synced)} commands(s)")
+    except Exception as e:
+        print(e)
 
-@client.command()
-async def hello(ctx):
-    await ctx.send("Hello, I am GG Study bot")
+@client.tree.command(name="hello")
+async def hello(interaction: discord.Interaction):
+    await interaction.response.send_message(f"Hey {interaction.user.mention}! This is GG study bot!",\
+        ephemeral=True)
 
-@client.command()
-async def test(ctx):
-    await ctx.send("Test: Great!")
+@client.tree.command(name="say")
+@app_commands.describe(arg="What should i say?")
+async def say(interaction: discord.Interaction, arg: str):
+    await interaction.response.send_message(f"{interaction.user.name} said: `{arg}`")
 
 client.run(config.TOKEN)
 
