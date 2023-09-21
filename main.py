@@ -27,7 +27,7 @@ async def hello(interaction: discord.Interaction):
 async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
-@client.command(name="ask", description="Ask the bot a question")
+@client.tree.command(name="ask", description="Ask the bot a question")
 async def ask(ctx, *, question: str):
     try:
         #set the OpenAI API key using the value from config.py
