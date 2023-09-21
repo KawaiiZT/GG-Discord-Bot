@@ -6,7 +6,6 @@ import config
 
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
-openai.api_key = OPENAI_API_KEY
 
 @client.event
 async def on_ready():
@@ -39,6 +38,16 @@ async def on_message(message):
 
         if user_message.startwith('!ask'):
             question = message.content[5:] #remove "!ask" from the message content
+
+            response = openai.ChatCompletion.create(
+                medel="gpt-3.5-turbo", #Specify the ChatGPT model to use
+                message=[
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "system", "content": question}
+                ]
+            )
+        await message.channel.send(response['choices'][0]['message']['content'])
+    await client.process_commands(message)
 
 client.run(config.TOKEN)
 client.run(config.OPENAI_API_KEY)
