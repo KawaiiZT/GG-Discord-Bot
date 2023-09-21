@@ -1,2 +1,4 @@
+#to install lib press Ctrl + ~ to open terminal
+#use commands " pip install -r.\requirements.in "
 openai
 discord.py
