@@ -1,9 +1,12 @@
 import discord
+import openai
 from discord import app_commands
 from discord.ext import commands
 import config
 
+
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
+openai.api_key = OPENAI_API_KEY
 
 @client.event
 async def on_ready():
@@ -25,6 +28,17 @@ async def hello(interaction: discord.Interaction):
 async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
+@client.event
+async def on_message(message):
+    #check if  the message is from a user and not a bot
+    if not message.author.client and client.user.mentioned_in(message):
+        
+        user_message = message.content.split(' ', 1)[1]
+        
+        response = 'Nothing yet!'
+
+        if user_message.startwith('!ask'):
+            question = message.content[5:] #remove "!ask" from the message content
 
 client.run(config.TOKEN)
-
+client.run(config.OPENAI_API_KEY)
