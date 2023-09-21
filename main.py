@@ -1,5 +1,6 @@
 import discord
 import openai
+import re
 from discord import app_commands
 from discord.ext import commands
 import config
@@ -27,27 +28,24 @@ async def hello(interaction: discord.Interaction):
 async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
-@client.event
-async def on_message(message):
-    #check if  the message is from a user and not a bot
-    if not message.author.client and client.user.mentioned_in(message):
-        
-        user_message = message.content.split(' ', 1)[1]
-        
-        response = 'Nothing yet!'
+@client.command(name="ask", description="Ask the bot a question")
+async def ask(ctx, *, question: str):
+    try:
+        #set the OpenAI API key using the value from config.py
+        openai.api_key = config.OPENAI_API_KEY
 
-        if user_message.startwith('!ask'):
-            question = message.content[5:] #remove "!ask" from the message content
+        # Use OpenAI to generate a response
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Specify the ChatGPT model to use
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": question}
+            ]
+        )
 
-            response = openai.ChatCompletion.create(
-                medel="gpt-3.5-turbo", #Specify the ChatGPT model to use
-                message=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "system", "content": question}
-                ]
-            )
-        await message.channel.send(response['choices'][0]['message']['content'])
-    await client.process_commands(message)
+        await ctx.send(response['choices'][0]['message']['content'])
+    except Exception as e:
+        await ctx.send(f"An error occurred: {e}")
+
 
 client.run(config.TOKEN)
-client.run(config.OPENAI_API_KEY)
