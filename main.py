@@ -3,6 +3,7 @@ import openai
 from discord import app_commands
 from discord.ext import commands
 import config
+from discord.utils import get
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
 
@@ -14,6 +15,25 @@ async def on_ready():
         print(f"Synced {len(synced)} commands(s)")
     except Exception as e:
         print(e)
+
+@client.event
+async def onready():
+    for guild in client.guilds:
+        for chanel in guild.txt_channels:
+            if str(chanel).strip() == "verify":   #verify = ห้องที่จะใช้
+                global verify_channel_id
+                verify_channel_id = channel.id
+                break
+
+@client.event
+async def on_raw_react_add(reaction):
+    if reaction.channel_id  == verify_channel_id:
+        if str(reaction.emoji) == "":
+            verified_role = get(reaction.member.guild.roles, name = "role")
+            await reaction.member.add_roles(verified_role)
+        elif str(reaction.emoji) == "":
+            verified_role = get(reaction.member.guild.roles, name = "role")
+            await reaction.member.add_roles(verified_role)
 
 #bot says hello to the user / for test purposes
 @client.tree.command(name="hello", description="Bot says hi to you")
