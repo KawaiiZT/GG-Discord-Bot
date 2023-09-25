@@ -19,7 +19,7 @@ async def on_ready():
 @client.event
 async def onready():
     for guild in client.guilds:
-        for chanel in guild.txt_channels:
+        for channel in guild.txt_channels:
             if str(chanel).strip() == "verify":   #verify = ห้องที่จะใช้
                 global verify_channel_id
                 verify_channel_id = channel.id
