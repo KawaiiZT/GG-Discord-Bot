@@ -4,8 +4,13 @@ from discord import app_commands
 from discord.ext import commands
 import config
 from discord.utils import get
+import os
+
+from music_cog import music_cog
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
+client.remove_command('help')
+client.add_cog(music_cog(client))
 
 @client.event
 async def on_ready():
@@ -20,7 +25,7 @@ async def on_ready():
 async def onready():
     for guild in client.guilds:
         for channel in guild.txt_channels:
-            if str(chanel).strip() == "verify":   #verify = ห้องที่จะใช้
+            if str(channel).strip() == "verify":   #verify = ห้องที่จะใช้
                 global verify_channel_id
                 verify_channel_id = channel.id
                 break
@@ -46,6 +51,7 @@ async def hello(interaction: discord.Interaction):
 async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
+#ChatGPT Commandlines 
 @client.tree.command(name="ask", description="Ask the bot a question")
 async def ask(ctx, *, question: str):
     try:
