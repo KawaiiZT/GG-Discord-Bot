@@ -7,10 +7,12 @@ from discord.utils import get
 import os
 
 from music_cog import music_cog
+from help_cog import help_cog
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
 client.remove_command('help')
 client.add_cog(music_cog(client))
+client.add_cog(help_cog(client))
 
 @client.event
 async def on_ready():
