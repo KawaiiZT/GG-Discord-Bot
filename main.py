@@ -1,13 +1,14 @@
 import discord
 import openai
-from discord import app_commands
-from discord.ext import commands
 import config
-from discord.utils import get
 import os
 
 from music_cog import music_cog
 from help_cog import help_cog
+from discord.utils import get
+from discord import app_commands
+from discord.ext import commands
+from keep_alive import keep_alive
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
 client.remove_command('help')
@@ -73,5 +74,5 @@ async def ask(ctx, *, question: str):
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
-
+keep_alive()
 client.run(config.TOKEN)
