@@ -1,15 +1,18 @@
-##tic tac toe kmitl project bot
+##Tic Tac Toe kmitl project bot
+
 import discord
 from discord.ext import commands
 import random
 
 client = commands.Bot(command_prefix="!")
 
+#กำหนดตัวแปรในเกม player1, player2, turn, gameOver, board, winningConditions, และ count
 player1 = ""
 player2 = ""
 turn = ""
 gameOver = True
 
+#กำหนดบอร์ดและเงื่อนไขการชนะด้วยlist
 board = []
 
 winningConditions = [
