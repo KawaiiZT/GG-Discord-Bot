@@ -73,4 +73,14 @@ async def place(ctx, pos: int):
     global count
     global gameOver
 
+   if gameOver:
+        global board
+        board = [":white_large_square:", ":white_large_square:", ":white_large_square:",
+                 ":white_large_square:", ":white_large_square:", ":white_large_square:",
+                 ":white_large_square:", ":white_large_square:", ":white_large_square:"]
+        turn = ""
+        gameOver = False
+        count = 0
 
+        player1 = p1
+        player2 = p2
