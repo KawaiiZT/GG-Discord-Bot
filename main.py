@@ -57,7 +57,7 @@ async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
 #ChatGPT Commandlines 
-@client.tree.command(name="ask", description="Ask the bot a question")
+@client.command(name="ask", description="Ask the bot a question")
 async def ask(ctx, *, question: str):
     try:
         #set the OpenAI API key using the value from config.py
