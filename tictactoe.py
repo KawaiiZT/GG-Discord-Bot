@@ -45,3 +45,11 @@ async def tictactoe(ctx, p1: discord.Member, p2: discord.Member):
 
         player1 = p1
         player2 = p2
+        
+        for x in range(len(board)):
+            if x == 2 or x == 5 or x == 8:
+                line += " " + board[x]
+                await ctx.send(line)
+                line = ""
+            else:
+                line += " " + board[x]
