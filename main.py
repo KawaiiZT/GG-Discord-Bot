@@ -17,6 +17,7 @@ client.add_cog(help_cog(client))
 
 @client.event
 async def on_ready():
+    #this line can change of what bot status it doing rightnow ex."Playing helping my teammate now"
     await client.change_presence(status=discord.Status.online, activity=discord.Game('helping my teammate now'))
     print("Bot is up and ready!")
     try:
