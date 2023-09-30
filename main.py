@@ -1,13 +1,14 @@
 import discord
 import openai
-from discord import app_commands
-from discord.ext import commands
 import config
-from discord.utils import get
 import os
 
 from music_cog import music_cog
 from help_cog import help_cog
+from discord.utils import get
+from discord import app_commands
+from discord.ext import commands
+from keep_alive import keep_alive
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
 client.remove_command('help')
@@ -16,6 +17,8 @@ client.add_cog(help_cog(client))
 
 @client.event
 async def on_ready():
+    #this line can change of what bot status it doing rightnow ex."Playing helping my teammate now"
+    await client.change_presence(status=discord.Status.online, activity=discord.Game('helping my teammate now'))
     print("Bot is up and ready!")
     try:
         synced = await client.tree.sync()
@@ -54,7 +57,7 @@ async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
 #ChatGPT Commandlines 
-@client.tree.command(name="ask", description="Ask the bot a question")
+@client.command(name="ask", description="Ask the bot a question")
 async def ask(ctx, *, question: str):
     try:
         #set the OpenAI API key using the value from config.py
@@ -73,5 +76,5 @@ async def ask(ctx, *, question: str):
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
 
-
+keep_alive()
 client.run(config.TOKEN)
