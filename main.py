@@ -17,6 +17,7 @@ client.add_cog(help_cog(client))
 
 @client.event
 async def on_ready():
+    await client.change_presence(status=discord.Status.online, activity=discord.Game('helping my teammate now'))
     print("Bot is up and ready!")
     try:
         synced = await client.tree.sync()

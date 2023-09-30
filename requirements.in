@@ -2,3 +2,5 @@
 #use commands " pip install -r.\requirements.in "
 openai
 discord.py
+Flask
+youtube_dl
