@@ -123,3 +123,21 @@ async def place(ctx, pos: int):
             if 0 < pos < 10 and board[pos - 1] == ":white_large_square:" :
                 board[pos - 1] = mark
                 count += 1
+
+                line = ""
+                for x in range(len(board)):
+                    if x == 2 or x == 5 or x == 8:
+                        line += " " + board[x]
+                        await ctx.send(line)
+                        line = ""
+                    else:
+                        line += " " + board[x]
+
+                checkWinner(winningConditions, mark)
+                print(count)
+                if gameOver == True:
+                    await ctx.send(mark + " wins!")
+                elif count >= 9:
+                    gameOver = True
+                    await ctx.send("It's a tie!")
+                    
