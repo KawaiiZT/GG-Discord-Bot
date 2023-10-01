@@ -140,4 +140,16 @@ async def place(ctx, pos: int):
                 elif count >= 9:
                     gameOver = True
                     await ctx.send("It's a tie!")
-                    
+
+                # เปลี่ยนตา
+                if turn == player1:
+                    turn = player2
+                elif turn == player2:
+                    turn = player1
+            else:
+                await ctx.send("Be sure to choose an integer between 1 and 9 (inclusive) and an unmarked tile.")
+        else:
+            await ctx.send("It is not your turn.")
+    else:
+        await ctx.send("Please start a new game using the !tictactoe command.")
+
