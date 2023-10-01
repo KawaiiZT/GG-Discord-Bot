@@ -73,7 +73,7 @@ async def place(ctx, pos: int):
     global count
     global gameOver
 
-   if gameOver:
+    if gameOver:
         global board
         board = [":white_large_square:", ":white_large_square:", ":white_large_square:",
                  ":white_large_square:", ":white_large_square:", ":white_large_square:",
@@ -84,3 +84,12 @@ async def place(ctx, pos: int):
 
         player1 = p1
         player2 = p2
+
+        line = ""
+        for x in range(len(board)):
+            if x == 2 or x == 5 or x == 8:
+                line += " " + board[x]
+                await ctx.send(line)
+                line = ""
+            else:
+                line += " " + board[x]
