@@ -3,17 +3,15 @@ import openai
 import config
 import os
 
-from music_cog import music_cog
-from help_cog import help_cog
+
 from discord.utils import get
 from discord import app_commands
 from discord.ext import commands
 from keep_alive import keep_alive
+from music_cog import music_cog
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
 client.remove_command('help')
-client.add_cog(music_cog(client))
-client.add_cog(help_cog(client))
 
 @client.event
 async def on_ready():
@@ -25,6 +23,9 @@ async def on_ready():
         print(f"Synced {len(synced)} commands(s)")
     except Exception as e:
         print(e)
+    
+    await client.add_cog(music_cog(client))
+ 
 
 @client.event
 async def onready():
