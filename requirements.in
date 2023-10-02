@@ -4,3 +4,5 @@ openai
 discord.py
 Flask
 youtube_dl
+urllib3
+PyNaCl
