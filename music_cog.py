@@ -1,29 +1,22 @@
 import discord
-from discord.ui import Select, Button
 from discord.ext import commands
-import asyncio
 from asyncio import run_coroutine_threadsafe
 from urllib import parse, request
 import re
-import json
-import os
-from youtube_dl import YoutubeDL
+import yt_dlp
+
+
 
 class music_cog(commands.Cog):
     def __init__(self, client):
         self.client = client
-        
         self.is_playing = {}
         self.is_paused = {}
         self.musicQueue = {}
         self.queueIndex = {}
-        
-        self.YTDL_OPTIONS = {'format': 'bestaudio', 'nonplaylist': 'True'}
-        self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', \
-            'options': '-vn'}
-        
+        self.YTDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True'}
+        self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
         self.embedPurple = 0x9B59B6
-        
         self.vc = {}
     
     #On ready status command
@@ -37,7 +30,7 @@ class music_cog(commands.Cog):
             self.is_paused[id] = self.is_playing[id] = False
     
     @commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after, ctx):
+    async def on_voice_state_update(self, member, before, after):
         id = int(member.guild.id)
         if member.id != self.client.user.id and before.channel != None and after.channel != before.channel:
             remainingChannelMembers = before.channel.members
@@ -77,82 +70,114 @@ class music_cog(commands.Cog):
 
     
     #search for yt audio
+    # Modify the search_yt function to handle direct YouTube links
     def search_yt(self, search):
-        queryString = parse.urlencode({'search_query': search})
-        htmContent = request.urlopen('http://www.youtube.com/results?' + queryString)
-        searchResults = re.findall('/watch\?v=(.{11})', htmContent.read().decode())
-        return searchResults[0:11]
+        ydl = yt_dlp.YoutubeDL(self.YTDL_OPTIONS)
+        query = parse.urlencode({'search_query': search})
+
+        try:
+            result = ydl.extract_info(f"ytsearch:{query}", download=False)
+        except yt_dlp.DownloadError:
+            return []
+
+        entries = result.get('entries', [])
+
+    # Check if the search result is empty and the input is a direct link
+        if not entries and 'youtube.com' in search and 'watch' in search:
+                return [search]
+
+        if not entries:
+            return []
+
+        return [entry['id'] for entry in entries]
+
+
+
     
     #extract yt link
     def extract_yt(self, url):
-        with YoutubeDL(self.YTDL_OPTIONS) as ydl:
-            try:
-                info = ydl.extract_info(url, download=False)
-            except:
-                return False
+        ydl = yt_dlp.YoutubeDL(self.YTDL_OPTIONS)
+        try:
+            info = ydl.extract_info(url, download=False)
+        except yt_dlp.DownloadError:
+            return False
+
         return {
-            'link': 'https://www.youtube.com/watch?v=' + url,
-            'thumbnail': 'https://i.ytimg.com/vi/' + url + '/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD5uL4xKN-IUfez6KIW_j5y70mlig',
-            'source': info['formats'][0]['url'],
+            'link': 'https://www.youtube.com/watch?v=' + info['id'],
+            'thumbnail': info['thumbnails'][0]['url'],  # Assuming there is at least one thumbnail
+            'source': info['url'],
             'title': info['title']
         }
+
+
 
     
     #play the song
     async def play_music(self, ctx):
+        # The modified version of the play_music method goes here
         id = int(ctx.guild.id)
-        if self.queueIndex[id] < len(self.musicQueue[id]):
-            self.is_playing = True
-            self.is_paused = False
-            
-            await self.join_VC(ctx, self.musicQueue[id][self.queueIndex[id]][1])
-            song = self.musicQueue[id][self.queueIndex[id]][0]
-            message = "Message"
-            await ctx.send(message)
-            
-            self.vc[id].play(discord.FFmpegPCMAudio(song['source'], **self.FFMPEG_OPTIONS, after=lambda e:self.play_next(ctx)))
-        else:
-            await ctx.send("There are no songs in the queue to be played.")
-            self.queueIndex[id] += 1
-            self.is_playing = False
+        
+        # Check if the bot is already playing
+        if self.is_playing.get(id, False):
+            await ctx.send("I'm already playing music.")
+            return
+
+        # Check if there are songs in the queue
+        if not self.musicQueue.get(id):
+            await ctx.send("There are no songs in the queue.")
+            return
+
+        # Get the first song in the queue
+        song = self.musicQueue[id][0][0]
+
+        # Join the voice channel
+        await self.join_VC(ctx, self.musicQueue[id][0][1])
+
+        # Play the song
+        self.vc[id].play(discord.FFmpegPCMAudio(song['source'], **self.FFMPEG_OPTIONS), after=lambda e: self.play_next(ctx))
+        
+        # Update state
+        self.is_playing[id] = True
+        await ctx.send(f"Now playing: {song['title']}")
 
     @commands.command(name = "play", aliases = ["p"], help = "")
     #add asterisks on *args for reading everything after the !p commands
     async def play(self, ctx, *args):
         search = " ".join(args)
         id = int(ctx.guild.id)
+
         try:
             userChannel = ctx.author.voice.channel
         except:
             await ctx.send("You must be connected to a voice channel.")
             return
-        if not args:
-            if len(self.musicQueue[id]) == 0:
-                await ctx.send("There are no songs to be played in the queue.")
-                return
-            #play the music if theres songs in the queue
-            elif not self.is_playing[id]:
-                if self.musicQueue[id] == None or self.vc[id] == None:
-                    await self.play_music(ctx)
-                else:
-                    self.is_paused[id] = False
-                    self.is_playing[id] = True
-                    self.vc[id].resume()
-            else:
-                return
+
+        # Check if search result is empty
+        search_results = self.search_yt(search)
+        if not search_results:
+            await ctx.send("No search results found.")
+            return
+
+        song = self.extract_yt(search_results[0])
+
+        if type(song) == type(True):
+            await ctx.send("Could not download the song. Incorrect format, try some different keywords.")
         else:
-            song = self.extract_yt(self.search_yt(search)[0])
-            if type(song) == type(True):
-                await ctx.send("Could not download the song or it's in incorrect format\
-                , try another different keywords.")
+            if id not in self.musicQueue:
+                self.musicQueue[id] = []
+
+            self.musicQueue[id].append([song, userChannel])
+
+            if id not in self.is_playing:
+                self.is_playing[id] = False
+
+            if not self.is_playing[id]:
+                await self.play_music(ctx)
             else:
-                self.musicQueue[id].append([song, userChannel])
-                
-                if not self.is_playing[id]:
-                    await self.play_music(ctx)
-                else:
-                    message = "Added to queue"
-                    await ctx.send(message)
+                message = self.added_song_embed(ctx, song)
+                await ctx.send(embed=message)
+
+
 
     #play next song
     def play_next(self, ctx):
