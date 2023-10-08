@@ -39,8 +39,13 @@ form.d-flex button:hover{
     max-width: 1300px;
 }
 .pt-10{
+    padding-top: 10rem!important;
+}
+
+.pt-16{
     padding-top: 20rem!important;
 }
+
 .custom-1 img{
     height: 269px;
     width: 510px;
@@ -58,9 +63,30 @@ form.d-flex button:hover{
     width: 40%;
 }
 
+.custom-2 img {
+    float: left;
+    height: 270px;
+    width: 540px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.custom-2 h3{
+    padding-top: 60px;
+    float: right;
+    width: 40%;
+}
+
+.custom-2 p{
+    float: right;
+    width: 40%;
+    color: rgb(255, 255, 255, .55);
+}
+
+
   /*น่าจอmedia*/
 @media screen and (max-width: 967px) {
-    .custom-1 img {
+    .container img {
         float: none;
         display: block;
         margin-left: auto;
@@ -71,15 +97,40 @@ form.d-flex button:hover{
     }
 
     .pt-10 {
-        padding-top: 5rem!important;
+        padding-top: 10rem!important;
     }
 
-    .custom p {
+    .pt-16{
+        padding-top: 20rem!important;
+    }
+
+    .custom-1 p {
         text-align: center;
         width: 100%;
     }
 
-    .custom h {
+    .custom h3 {
         text-align: center;
+    }
+
+    .custom-2 p{
+        text-align: center;
+        float: none;
+        width: 100%;
+    }
+
+    .custom-2 h3 {
+        float: none;
+        text-align: center;
+        width: 100%;
+    }
+    .custom-2 img {
+        float: none;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
     }
 }
