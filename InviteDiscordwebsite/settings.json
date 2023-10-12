@@ -3,5 +3,24 @@
         "name": "GG bot",
         "avatar": "https://cdn.discordapp.com/avatars/1153559337751547996/5492729e277bcaca49a61b37119f19b7.webp?size=80",
         "invite": "https://discord.com/api/oauth2/authorize?client_id=1153559337751547996&permissions=8&scope=bot"
+    },
+    "commands": {
+        "basic": [{
+            "name": "help",
+            "catagory": "basic",
+            "description": "add the code on website with the help of this commands",
+            "permissions": ["MANAGE_GUILD"],
+            "aliases": ["h"],
+            "usage": "!help <cmd>"
+        }, {
+            "name": "mute",
+            "catagory": "basic",
+            "description": "add the code on website with the help of this commands",
+            "permissions": ["MANAGE_GUILD", "MANAGE_MESSAGES", "MANAGE_PP"],
+            "aliases": ["mute"],
+            "usage": "!mute <@mention> <reason>"
+
+        }
+        ]
     }
 }
