@@ -19,8 +19,6 @@
             "permissions": ["MANAGE_GUILD", "MANAGE_MESSAGES", "MANAGE_PP"],
             "aliases": ["mute"],
             "usage": "!mute <@mention> <reason>"
-
-        }
-        ]
+        }]
     }
 }

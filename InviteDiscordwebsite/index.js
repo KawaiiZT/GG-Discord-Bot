@@ -9,10 +9,8 @@ app.use(express.static("public"));
 app.get("/",(req, res) =>{
     res.render('index', {bot: settings.website})
 })
-
 app.get("/commands", (req, res) => {
-    res.render('commands', { bot: settings.website, commands: settings.commands })
-
+    res.render("commands", {bot: settings.website, commands: settings.commands})
 })
 
 const listener = server.listen(8000, function() {
