@@ -11,7 +11,7 @@ app.get("/",(req, res) =>{
 })
 
 app.get("/commands", (req, res) => {
-    res.render('commands', { bot: settings.website, commands: settings.commands });
+    res.render('commands', { bot: settings.website, commands: settings.commands })
 
 })
 
