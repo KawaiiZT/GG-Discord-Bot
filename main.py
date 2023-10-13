@@ -2,13 +2,15 @@ import discord
 import openai
 import config
 import os
-
+import time
+import platform
 
 from discord.utils import get
 from discord import app_commands
 from discord.ext import commands
 from keep_alive import keep_alive
 from music_cog import music_cog
+from colorama import Back, Fore, Style
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
 client.remove_command('help')
@@ -56,6 +58,12 @@ async def hello(interaction: discord.Interaction):
 @client.tree.command(name="say", description="What should I say?")
 async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
+
+#shutdown command
+@client.command(name="stop", description="Shutting down the bot")
+async def shutdown(ctx):
+    await ctx.send("Shutting down the bot")
+    await client.close()
 
 #ChatGPT Commandlines 
 @client.command(name="ask", description="Ask the bot a question")
