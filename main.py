@@ -10,6 +10,7 @@ from discord import app_commands
 from discord.ext import commands
 from keep_alive import keep_alive
 from music_cog import music_cog
+from tictactoe import tictactoe
 from colorama import Back, Fore, Style
 
 client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
@@ -27,6 +28,7 @@ async def on_ready():
         print(e)
     
     await client.add_cog(music_cog(client))
+    await client.add_cog(tictactoe(client))
  
 
 @client.event
