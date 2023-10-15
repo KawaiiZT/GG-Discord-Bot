@@ -50,7 +50,10 @@
               <div id="c_<%=  cmd.name %>" class="accordion-collapse collapse <%= i==0 ? 'show' : '' %>" aria-labelledby="h_<%=  cmd.name %>" 
                 data-bs-parent="#acc_<%= category %>">
                 <div class="accordion-body">
-                <code>Description : </code><%= cmd.description %> <br> 
+                <code>Description : </code><%= cmd.description %> <br>
+                <code>Permissions : </code><%= cmd.permissions %> <br>
+                <code>Aliases : </code><%= cmd.aliases %> <br>
+                <code>Usage : </code><small><kbd><%= cmd.usage %></kbd></small><br>
                 </div>
               </div>
             </div>
