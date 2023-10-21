@@ -2,35 +2,48 @@ import discord
 import openai
 import config
 import os
-import time
-import platform
+import asyncio
 
 from discord.utils import get
 from discord import app_commands
 from discord.ext import commands
 from keep_alive import keep_alive
-from music_cog import music_cog
-from tictactoe import tictactoe
+from cogs.music_cog import Music
 from colorama import Back, Fore, Style
 
-client = commands.Bot(command_prefix="!", intents = discord.Intents.all())
+client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 client.remove_command('help')
+
+async def load_all_cogs(client):
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py'):
+            await client.load_extension(f"cogs.{filename[:-3]}")
+
+
 
 @client.event
 async def on_ready():
-    #this line can change of what bot status it doing rightnow ex."Playing helping my teammate now"
     await client.change_presence(status=discord.Status.online, activity=discord.Game('helping my teammate now'))
     print("Bot is up and ready!")
+
     try:
         synced = await client.tree.sync()
         print(f"Synced {len(synced)} commands(s)")
     except Exception as e:
         print(e)
-    
-    await client.add_cog(music_cog(client))
-    await client.add_cog(tictactoe(client))
- 
 
+    await load_all_cogs(client)
+        # List of cogs to add, modify as needed
+    cogs_to_add = [Music(client)]
+
+    for cog in cogs_to_add:
+        # Add cog only if it's not already loaded
+        if cog.qualified_name not in get_cog_names(client):
+            await client.add_cog(cog)
+            
+def get_cog_names(client):
+    return [cog.name if isinstance(cog, commands.Cog) else cog for cog in client.cogs]
+    
 @client.event
 async def onready():
     for guild in client.guilds:
@@ -61,12 +74,6 @@ async def hello(interaction: discord.Interaction):
 async def say(interaction: discord.Interaction, thingtosay: str):
     await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
 
-#shutdown command
-@client.command(name="stop", description="Shutting down the bot")
-async def shutdown(ctx):
-    await ctx.send("Shutting down the bot")
-    await client.close()
-
 #ChatGPT Commandlines 
 @client.command(name="ask", description="Ask the bot a question")
 async def ask(ctx, *, question: str):
@@ -86,6 +93,23 @@ async def ask(ctx, *, question: str):
         await ctx.send(response['choices'][0]['message']['content'])
     except Exception as e:
         await ctx.send(f"An error occurred: {e}")
+        
+@client.tree.command(name="lcogs", description="Load the cogs extension.")
+async def load_cogs(interaction: discord.Interaction, extension: str):
+    await client.load_extension(f"cogs.{extension}")
+    await interaction.response.send_message(f"Loaded extension.", ephemeral=True)
+
+@client.tree.command(name="rcogs", description="Reload the cogs extension.")
+async def reload_cogs(interaction: discord.Interaction, extension: str):
+    await client.reload_extension(f"cogs.{extension}")
+    await interaction.response.send_message(f"Reloaded extension",\
+        ephemeral=True)
+
+@client.tree.command(name="ulcogs", description="Unload the cogs extension.")
+async def unload_cogs(interaction: discord.Interaction, extension: str):
+    await client.unload_extension(f"cogs.{extension}")
+    await interaction.response.send_message(f"Unload extension.",\
+        ephemeral=True)
 
 keep_alive()
 client.run(config.TOKEN)
