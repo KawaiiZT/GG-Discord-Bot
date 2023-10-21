@@ -82,6 +82,12 @@ form.d-flex button:hover{
     width: 40%;
     color: rgb(255, 255, 255, .55);
 }
+.about-section {
+    padding: 50px;
+    text-align: center;
+    background-color: #474e5d;
+    color: white;
+  }
 
 
   /*น่าจอmedia*/

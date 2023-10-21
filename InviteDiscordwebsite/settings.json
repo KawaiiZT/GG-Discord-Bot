@@ -7,16 +7,16 @@
     "commands": {
         "basic": [{
             "name": "help",
-            "catagory": "basic",
+            "category": "basic", // Corrected attribute name
             "description": "add the code on website with the help of this commands",
             "permissions": ["MANAGE_GUILD"],
             "aliases": ["h"],
             "usage": "!help <cmd>"
         }, {
             "name": "mute",
-            "catagory": "basic",
+            "category": "basic", // Corrected attribute name
             "description": "add the code on website with the help of this commands",
-            "permissions": ["MANAGE_GUILD", "MANAGE_MESSAGES", "MANAGE_PP"],
+            "permissions": ["MANAGE_GUILD"],
             "aliases": ["mute"],
             "usage": "!mute <@mention> <reason>"
         }]
