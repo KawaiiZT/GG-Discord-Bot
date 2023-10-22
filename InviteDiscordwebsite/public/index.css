@@ -194,4 +194,12 @@ form.d-flex button:hover{
         max-width: 400px;
         height: auto;
     }
+    .team{
+        width: 100%;
+        height: auto;
+        padding: 90px 2%;
+    }
+    .center h1{
+        font-size: 3.2rem;
+    }
 }
