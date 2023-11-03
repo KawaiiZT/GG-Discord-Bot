@@ -3,6 +3,7 @@ const settings = require("./settings.json");
 const express = require("express");
 const app = express();
 const server = http.createServer(app);
+const keep_alive = require('./keep_alive.js')
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
 
