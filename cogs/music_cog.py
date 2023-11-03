@@ -11,8 +11,7 @@ import asyncio
 
 
 class Music(commands.Cog):
-    name = "Music"
-    def __init__(self, client):
+    def __init__(self, client: commands.Bot) -> None:
         self.client = client
         self.is_playing = {}
         self.is_paused = {}
@@ -294,5 +293,5 @@ class Music(commands.Cog):
                 message = self.added_song_embed(ctx, song)
                 await ctx.send(embed=message)
         
-async def setup(client):
+async def setup(client:commands.Bot) -> None:
     await client.add_cog(Music(client))

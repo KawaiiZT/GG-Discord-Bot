@@ -1,1 +1,1 @@
-    await client.add_cog(Music(client)) 
+

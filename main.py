@@ -3,113 +3,44 @@ import openai
 import config
 import os
 import asyncio
+import time
+import json
+import platform
 
 from discord.utils import get
 from discord import app_commands
 from discord.ext import commands
 from keep_alive import keep_alive
-from cogs.music_cog import Music
 from colorama import Back, Fore, Style
+from typing import Literal
 
-client = commands.Bot(command_prefix="!", intents=discord.Intents.all())
-client.remove_command('help')
+class Client(commands.Bot):
+    def __init__(self):
+        super().__init__(command_prefix=commands.when_mentioned_or('.'), intents=discord.Intents().all(), help_command=None)
 
-async def load_all_cogs(client):
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py'):
-            await client.load_extension(f"cogs.{filename[:-3]}")
+        self.cogslist = ["help_cog", "music_cog", "gpt_cog"]
 
+    async def setup_hook(self):
+        for ext in self.cogslist:
+            await self.load_extension("cogs."+ext)
 
+    async def on_ready(self):
+        prfx = (Back.BLACK + Fore.GREEN + time.strftime("%H:%M:%S GMT", time.localtime()) + \
+            Back.RESET + Fore.WHITE + Style.BRIGHT)
+        print(prfx + " Logged in as " + Fore.YELLOW + self.user.name)
+        print(prfx + " Bot ID " + Fore.YELLOW + str(self.user.id))
+        print(prfx + " Discord.py Version " + Fore.YELLOW + discord.__version__)
+        synced = await self.tree.sync()
+        print(prfx + " Synced " + Fore.YELLOW + str(len(synced)) + " Commands")
 
-@client.event
-async def on_ready():
-    await client.change_presence(status=discord.Status.online, activity=discord.Game('helping my teammate now'))
-    print("Bot is up and ready!")
-
+client = Client()
+@client.tree.command(name="reload", description="reload cog file")
+async def reload(interaction: discord.Interaction, cog:Literal["help_cog", "music_cog", "gpt_cog"]):
     try:
-        synced = await client.tree.sync()
-        print(f"Synced {len(synced)} commands(s)")
+        await client.reload_extension(name="cogs."+cog.lower())
+        await interaction.response.send_message(f"Successfully reloaded **{cog}.py**", ephemeral=True)
     except Exception as e:
-        print(e)
-
-    await load_all_cogs(client)
-        # List of cogs to add, modify as needed
-    cogs_to_add = [Music(client)]
-
-    for cog in cogs_to_add:
-        # Add cog only if it's not already loaded
-        if cog.qualified_name not in get_cog_names(client):
-            await client.add_cog(cog)
-            
-def get_cog_names(client):
-    return [cog.name if isinstance(cog, commands.Cog) else cog for cog in client.cogs]
+        await interaction.response.send_message(f"Failed to reload **{cog}.py**. See error below\n ```{e}```", ephemeral=True)
     
-@client.event
-async def onready():
-    for guild in client.guilds:
-        for channel in guild.txt_channels:
-            if str(channel).strip() == "verify":   #verify = ห้องที่จะใช้
-                global verify_channel_id
-                verify_channel_id = channel.id
-                break
-
-@client.event
-async def on_raw_react_add(reaction):
-    if reaction.channel_id  == verify_channel_id:
-        if str(reaction.emoji) == "":
-            verified_role = get(reaction.member.guild.roles, name = "role")
-            await reaction.member.add_roles(verified_role)
-        elif str(reaction.emoji) == "":
-            verified_role = get(reaction.member.guild.roles, name = "role")
-            await reaction.member.add_roles(verified_role)
-
-#bot says hello to the user / for test purposes
-@client.tree.command(name="hello", description="Bot says hi to you")
-async def hello(interaction: discord.Interaction):
-    await interaction.response.send_message(f"Hey {interaction.user.mention}! This is GG study bot!",\
-        ephemeral=True)
-
-#say command(kinda like tts) / for test purposes
-@client.tree.command(name="say", description="What should I say?")
-async def say(interaction: discord.Interaction, thingtosay: str):
-    await interaction.response.send_message(f"{interaction.user.name} said: `{thingtosay}`")
-
-#ChatGPT Commandlines 
-@client.command(name="ask", description="Ask the bot a question")
-async def ask(ctx, *, question: str):
-    try:
-        #set the OpenAI API key using the value from config.py
-        openai.api_key = config.OPENAI_API_KEY
-
-        # Use OpenAI to generate a response
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Specify the ChatGPT model to use
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": question}
-            ]
-        )
-
-        await ctx.send(response['choices'][0]['message']['content'])
-    except Exception as e:
-        await ctx.send(f"An error occurred: {e}")
-        
-@client.tree.command(name="lcogs", description="Load the cogs extension.")
-async def load_cogs(interaction: discord.Interaction, extension: str):
-    await client.load_extension(f"cogs.{extension}")
-    await interaction.response.send_message(f"Loaded extension.", ephemeral=True)
-
-@client.tree.command(name="rcogs", description="Reload the cogs extension.")
-async def reload_cogs(interaction: discord.Interaction, extension: str):
-    await client.reload_extension(f"cogs.{extension}")
-    await interaction.response.send_message(f"Reloaded extension",\
-        ephemeral=True)
-
-@client.tree.command(name="ulcogs", description="Unload the cogs extension.")
-async def unload_cogs(interaction: discord.Interaction, extension: str):
-    await client.unload_extension(f"cogs.{extension}")
-    await interaction.response.send_message(f"Unload extension.",\
-        ephemeral=True)
-
 keep_alive()
 client.run(config.TOKEN)
