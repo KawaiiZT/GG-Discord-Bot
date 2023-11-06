@@ -3,7 +3,7 @@ import datetime
 from discord.ext import commands
 from discord import app_commands
 
-#idของChannelในDiscord
+#idของChannelในDiscord สามารถแก้ เพื่อใส่ welcome message ในเซิพเวอร์ได้
 welcome_channel = 1152256157604392982
 
 bot = commands.Bot(command_prefix='.', intents=discord.Intents.default())
