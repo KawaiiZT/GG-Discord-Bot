@@ -6,26 +6,11 @@
     },
     "commands": {
         "basic": [{
-            "name": "help",
+            "name": "help command",
             "category": "basic",
-            "description": "add the code on website with the help of this commands",
+            "description": "get the help about command you want to use",
             "permissions": ["MANAGE_GUILD"],
-            "aliases": ["h"],
-            "usage": "!help <cmd>"
-        }, {
-            "name": "mute",
-            "category": "basic",
-            "description": "add the code on website with the help of this commands",
-            "permissions": ["MANAGE_GUILD"],
-            "aliases": ["mute"],
-            "usage": "!mute <@mention> <reason>"
-        }, {
-            "name": "mute2",
-            "category": "basic",
-            "description": "add the code on website with the help of this commands",
-            "permissions": ["MANAGE_GUILD"],
-            "aliases": ["mute"],
-            "usage": "!mute <@mention> <reason>"
+            "usage": "/help <cmd>"
         }]
     }
 }
