@@ -1,14 +1,18 @@
 import discord
+from discord.ui import Select, Button
 from discord.ext import commands
-from discord import app_commands
+from discord import app_commands, SelectOption
 from asyncio import run_coroutine_threadsafe
 from urllib import parse, request
+from youtubesearchpython import VideosSearch
+
 
 import json
 import re
 import yt_dlp
 import threading
 import asyncio
+
 
 
 class Music(commands.Cog):
@@ -18,7 +22,7 @@ class Music(commands.Cog):
         self.is_paused = {}
         self.musicQueue = {}
         self.queueIndex = {}
-        self.YTDL_OPTIONS = {'format': 'bestaudio/best', 'noplaylist': 'True'}
+        self.YTDL_OPTIONS = {'format': 'bestaudio', 'noplaylist': 'True', 'novideo': 'True'}
         self.FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
         self.embedPurple = 0x9B59B6
         self.vc = {}
@@ -158,8 +162,17 @@ class Music(commands.Cog):
             'title': info['title'],
             'thumbnail': thumbnail  # Set the thumbnail here
         }
-        
-    async def play_music(self, interaction, url):
+    
+    async def send_embed_message(self, interaction, song):
+        id = int(interaction.guild.id)
+        message = self.now_playing_embed(interaction, song)
+        try:
+            await interaction.response.send_message(embed=message)
+        except discord.errors.NotFound:
+            # Handle the "Not Found" error for the interaction
+            pass
+    
+    async def play_song(self, interaction, url):
         id = int(interaction.guild.id)
 
         try:
@@ -180,14 +193,17 @@ class Music(commands.Cog):
                 # Handle the "Not Found" error for the interaction
                 pass
         else:
+            # Call the function to send the embed message
+            await self.send_embed_message(interaction, song)
+
+            # Play the song
             self.is_playing[id] = True
             self.vc[id].play(discord.FFmpegPCMAudio(song['source'], **self.FFMPEG_OPTIONS), after=lambda e: self.play_next(interaction, id))
-            message = self.now_playing_embed(interaction, song)
-            try:
-                await interaction.response.send_message(embed=message)  # Send the actual response
-            except discord.errors.NotFound:
-                # Handle the "Not Found" error for the interaction
-                pass
+        
+    async def play_music(self, interaction, url):
+        # Call the function to send the embed message and play the song
+        await self.play_song(interaction, url)
+
 
     async def add_song(self, interaction: discord.Interaction, query: str):
         try:
@@ -234,7 +250,7 @@ class Music(commands.Cog):
 
     @app_commands.command(name="play", description="Play the song")
     async def play(self, interaction: discord.Interaction, query: str):
-        # Check if the input is a valid URL
+        # Check if the input is a valid YouTube link
         url_pattern = r'^(https?://)?(www\.)?youtube\.com/watch\?v=|youtu\.be/|youtube\.com/playlist\?list='
         is_url = re.match(url_pattern, query)
 
@@ -242,13 +258,8 @@ class Music(commands.Cog):
             # If it's a URL, play the song directly
             await self.play_music(interaction, query)
         else:
-            # If it's not a URL, assume it's a search query and try to find a video
-            search_results = await self.search_yt_async(query)
-            if not search_results:
-                await interaction.response.send_message("No search results found. Please specify a valid URL or search term.", ephemeral=True)
-            else:
-            # Play the first search result
-                await self.play_music(interaction, search_results[0])
+            # If it's not a valid YouTube link, instruct the user to use a valid link
+            await interaction.response.send_message("Please use the </ytsearch:1172889122743009341> command to find the link and play a song.", ephemeral=True)
 
     def play_next(self, interaction, guild_id):
         if not self.is_playing[guild_id]:
@@ -316,66 +327,30 @@ class Music(commands.Cog):
     
     @app_commands.command(name="add", description="Add the song to the queue.")
     async def add(self, interaction: discord.Interaction, query: str):
-        try:
-            userChannel = interaction.user.voice.channel
-        except AttributeError:
-            await interaction.response.send_message("You must be in a voice channel", ephemeral=True)
-            return
+        ...
+        
+    @app_commands.command(name='ytsearch', description='Search for YouTube link for the music bot')
+    async def youtube_search_command(self, interaction: discord.Interaction, query: str):
+        query = ' '.join(query)
 
-        if not query:
-            await interaction.response.send_message("You need to specify a song to be added", ephemeral=True)
+        videos_search = VideosSearch(query, limit=3)  # Set the limit to 3 for the first 3 results
+        results = videos_search.result()
+
+        messages = []
+
+        if results:
+            for index, video in enumerate(results['result'], start=1):
+                video_url = f"https://www.youtube.com/watch?v={video['id']}"
+                messages.append(f"Result {index}: {video_url}")
+
+            # Send all messages at once
+            await interaction.response.send_message('\n'.join(messages))
         else:
-            guild_id = interaction.guild.id
-            try:
-                if guild_id not in self.musicQueue:
-                    self.musicQueue[guild_id] = []
-                search_results = await self.search_yt_async(query)
-                if not search_results:
-                    await interaction.response.send_message("No search results found. Please specify a valid URL or search term.", ephemeral=True)
-                else:
-                    song_info = await self.extract_yt_async(search_results[0])
-                    if not song_info:
-                        await interaction.response.send_message("Could not download the song, incorrect format. Try different keywords.")
-                    else:
-                        self.musicQueue[guild_id].append([song_info, userChannel])
-                        if guild_id not in self.is_playing:
-                            self.is_playing[guild_id] = False
+            await interaction.response.send_message("No results found.")
 
-                        if not self.is_playing[guild_id]:
-                            await self.play_next(interaction, guild_id)  # Play the first song
-                        else:
-                            message = self.added_song_embed(interaction, song_info)
-                            await interaction.response.send_message(embed=message)
-            except Exception as e:
-                print(f"Error in 'add' command: {e}")
-                print(f"Guild ID: {guild_id}")
-                print(f"musicQueue: {self.musicQueue}")
-                raise
-        
-    @app_commands.command(name="search", description= "Search the first 10 result song from query.")
-    async def search(self, interaction: discord.Interaction, query: str):
-        search = " ".join(query)
-        songNames = []
-        selectionOptions = []   
-        embedText = ""
-            
-        if not query:
-            await interaction.response.send_message("You must specify search terms to use this command.")
-        try:
-            userChannel = interaction.autuor.voice.channel
-        except:
-            await interaction.response.send_message("You must be connected to a voice channel")
-            return
-            
-        await interaction.response.send_message("Fetching search results . . .")
-        songTokens = self.search_yt_async(search)
-        
-        for i, token in enumerate(songTokens):
-            url = 'https://www.youtube.com/watch?v=' + token
-            name = self.get_YT_title(token)
-            songNames.append(name)
-            embedText += f"{i+1} - [{name}]()"
-            
 
+
+    
+                
 async def setup(client:commands.Bot) -> None:
     await client.add_cog(Music(client))
