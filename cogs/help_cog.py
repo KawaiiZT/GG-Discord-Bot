@@ -19,6 +19,10 @@ class help(commands.Cog):
             if select.values[0] == "Music":
                 print("I'm here to help please wait for me.")
             await interaction.response.send_message(f"You chose: {select.values[0]}")
+            embed = discord.Embed()
+            embed.add_field(name="คำสั่งการใช้งาน Music",  value="ดูตามคำสั่งด้านล่างได้เลย",inline=False)
+            embed.add_field(name="เปิดเพลง", value="'''/play link'''", inline=True)
+            await interaction.followup.send(embed=embed)
         select.callback = my_callback
         view = View()
         view.add_item(select)
