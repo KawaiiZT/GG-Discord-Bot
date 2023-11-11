@@ -27,6 +27,20 @@ class help(commands.Cog):
                 embed.add_field(name="👍ให้ Bot เข้าเซิฟเวอร์✔️", value="```/join```", inline=True)
                 embed.add_field(name="👋ให้ Bot ออกเซิฟเวอร์❌", value="```/leave```", inline=True)
                 await interaction.followup.send(embed=embed)
+
+            elif select.values[0] == "ChatGPT":
+                await interaction.response.send_message(f"You chose: {select.values[0]}")
+                embed = discord.Embed(title=f"สวัสดีครับในนี้คือคำสั่งสำหรับหมวด ChatGPT ครับ❓", color=0x03a9f4)
+                embed.add_field(name="ถามคำถาม Bot", value="```!ask คำถามต่างๆ Eng/Thai ```", inline=True)
+                await interaction.followup.send(embed=embed)
+            
+            elif select.values[0] == "Attandance":
+                await interaction.response.send_message(f"You chose: {select.values[0]}")
+                embed = discord.Embed(title=f"สวัสดีครับในนี้คือคำสั่งสำหรับหมวด Attandance ครับ✅", color=0x03a9f4)
+                embed.add_field(name="เช็คชื่อ", value="``` คำสั่งใส่ตรงนี้ ```", inline=True)
+                await interaction.followup.send(embed=embed)
+
+
         select.callback = my_callback
         view = View()
         view.add_item(select)
