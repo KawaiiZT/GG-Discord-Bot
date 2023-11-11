@@ -7,11 +7,12 @@ class help(commands.Cog):
     def __init__(self, client: commands.Bot) -> None:
         self.client = client
 
-    @app_commands.command(name="help", description="ello")
+    @app_commands.command(name="help", description="Find about commands")
     async def help(self, interaction: discord.Interaction):
         select = Select(options= [
             discord.SelectOption(label="Music", emoji = "🎶"),
             discord.SelectOption(label="Attandance", emoji = "✅"),
+            discord.SelectOption(label="ChatGPT", emoji= "❓"),
         ])
         
         async def my_callback(interaction):
