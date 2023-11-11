@@ -7,17 +7,22 @@ class help(commands.Cog):
     def __init__(self, client: commands.Bot) -> None:
         self.client = client
 
-    @app_commands.command(name="help", description="ello")
+    @app_commands.command(name="help", description="Find about commands")
     async def help(self, interaction: discord.Interaction):
         select = Select(options= [
             discord.SelectOption(label="Music", emoji = "🎶"),
             discord.SelectOption(label="Attandance", emoji = "✅"),
+            discord.SelectOption(label="ChatGPT", emoji= "❓"),
         ])
         
         async def my_callback(interaction):
             if select.values[0] == "Music":
                 print("I'm here to help please wait for me.")
             await interaction.response.send_message(f"You chose: {select.values[0]}")
+            embed = discord.Embed()
+            embed.add_field(name="คำสั่งการใช้งาน Music",  value="ดูตามคำสั่งด้านล่างได้เลย",inline=False)
+            embed.add_field(name="เปิดเพลง", value="'''/play link'''", inline=True)
+            await interaction.followup.send(embed=embed)
         select.callback = my_callback
         view = View()
         view.add_item(select)
