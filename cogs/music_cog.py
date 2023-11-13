@@ -1,47 +1,94 @@
-import discord
-from discord.ext import commands, tasks
-from discord import app_commands, VoiceClient
-import youtube_dl
-import asyncio
+import discord, pytube, asyncio, yt_dlp
+from discord import app_commands
+from discord.ext import commands
+from pytube import YouTube
 from youtubesearchpython import VideosSearch
+
 
 class Music(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.queue = []
         self.embedPurple = 0x9B59B6
-        self.is_playing = False
+        self.queue = []
 
+    @commands.Cog.listener()
+    async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
+        if member.bot and after.channel is None and self.queue:
+            interaction = self.queue.pop(0)
+            await self.play_next(interaction)
+    
+    def now_playing_embed(self, interaction, song):
+        title = song['title']
+        link = song['link']
+        thumbnail = song['thumbnail']
+        duration = song['duration']
+        channel_author = song['channel_author']
+        author = interaction.user
+        avatar = author.avatar.url
 
-    @app_commands.command(name="join", description="Bot joins the voice chat")
-    async def join(self, interaction: discord.Interaction):
-        channel = interaction.user.voice.channel
-
-        await channel.connect()
-        await interaction.response.send_message(f"I've been connected to {channel} channel!", ephemeral=True)
-
-
-    @app_commands.command(name="leave", description="Bot leaves the voice chat.")
-    async def leave(self, interaction: discord.Interaction):
-        voice_client = interaction.guild.voice_client
-        if voice_client:
-            await voice_client.disconnect()
-
-
-    @app_commands.command(name="play", description="Play a song from youtube.")
-    async def play(self, interaction: discord.Interaction, url: str):
-        # Check if the provided input is not a valid YouTube URL
-        if not self.is_youtube_url(url):
-            await interaction.response.send_message("Please provide a valid YouTube URL or use `/ytsearch` to retrieve the link and use the `/play` command again :(",
-                                                    ephemeral=True)
+        embed = discord.Embed(
+            title="Songs added to the queue 🎶",
+            description=f'**Music**:\n[{title}]({link})',
+            color=self.embedPurple
+        )
+        embed.add_field(name="Channel Author:", value=f"`{channel_author}`")
+        embed.add_field(name="🕐 Duration:", value=f"`{duration}`", inline=False)
+        embed.set_thumbnail(url=thumbnail)
+        embed.set_footer(text=f'Song added by: {str(author)}', icon_url=avatar)
+        return embed
+    
+    async def play_next(self, interaction: discord.Interaction):
+        if len(self.queue) == 0:
+            if interaction.guild.voice_client is not None and interaction.guild.voice_client.is_connected():
+                await interaction.guild.voice_client.disconnect()
             return
 
-        if not self.is_playing:
-            await interaction.response.send_message("Now playing your song.")
-            await self.start_playing(interaction, url)
+        voice_channel = interaction.user.voice.channel
+        voice_channel = discord.utils.get(interaction.guild.voice_channels, name=voice_channel.name)
 
-            # Get information about the song for the Now Playing embed
-            with youtube_dl.YoutubeDL({'format': 'bestaudio/best'}) as ydl:
+        if interaction.guild.voice_client is None:
+            vc = await voice_channel.connect()
+        else:
+            vc = interaction.guild.voice_client
+
+        if self.queue:
+            song_url = self.queue.pop(0)
+            FFMPEG_OPTIONS = {
+                'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+                'options': '-vn',
+            }
+            vc.play(discord.FFmpegPCMAudio(song_url, **FFMPEG_OPTIONS), after=lambda e: self.client.loop.create_task(self.play_next(interaction)))
+        else:
+            voice_client = discord.utils.get(interaction.guild.voice_clients, guild=interaction.guild)
+            if voice_client.is_connected():
+                await voice_client.disconnect()
+
+    def format_duration(self, duration):
+        minutes, seconds = divmod(duration, 60)
+        return f"{int(minutes)}:{int(seconds):02}"
+
+    @app_commands.command(name='play', description='Play a song from YouTube.')
+    async def play(self, interaction: discord.Interaction, url: str):
+        voice_channel = interaction.user.voice.channel
+
+        if voice_channel:
+            await interaction.response.send_message("Processing your request...")
+            video = YouTube(url)
+            song_url = video.streams.filter(only_audio=True).first().url
+
+            if interaction.guild.voice_client is None:
+                vc = await voice_channel.connect()
+            else:
+                vc = interaction.guild.voice_client
+
+            # Add the song to the queue
+            self.queue.append(song_url)
+
+            # If the bot is not currently playing, start playing
+            if not vc.is_playing():
+                await self.play_next(interaction)
+            
+            with yt_dlp.YoutubeDL() as ydl:  # Use yt_dlp instead of youtube_dl
                 info = ydl.extract_info(url, download=False)
                 song_info = {
                     'title': info['title'],
@@ -53,183 +100,33 @@ class Music(commands.Cog):
 
             # Create the Now Playing embed
             now_playing_embed = self.now_playing_embed(interaction, song_info)
-
-            # Edit the original message with the new embed
+            # Send an embed message to confirm the song was added
             await interaction.edit_original_response(embed=now_playing_embed)
-        
-        elif self.is_playing:
-            await interaction.response.send_message("Song has been added to the queue.")
-            await self.start_playing(interaction, url)
-
-            with youtube_dl.YoutubeDL({'format': 'bestaudio/best'}) as ydl:
-                info = ydl.extract_info(url, download=False)
-                song_info = {
-                    'title': info['title'],
-                    'link': f"https://www.youtube.com/watch?v={info['id']}",
-                    'thumbnail': info['thumbnail'],
-                    'duration': self.format_duration(info['duration']),
-                    'channel_author': info['uploader']
-                }
-                
-            added_to_queue = self.added_to_queue_embed(interaction, song_info)
-            
-            await interaction.edit_original_response(embed=added_to_queue)
-
-    # Helper method to check if the provided URL is a YouTube video URL
-    def is_youtube_url(self, url):
-        return "youtube.com" in url or "youtu.be" in url
-            
-
-    def format_duration(self, duration):
-        minutes, seconds = divmod(duration, 60)
-        return f"{int(minutes)}:{int(seconds):02}"
-
-
-    def now_playing_embed(self, interaction, song):
-        title = song['title']
-        link = song['link']
-        thumbnail = song['thumbnail']
-        duration = song['duration']
-        channel_author = song['channel_author']
-        author = interaction.user
-        avatar = author.avatar.url
-
-        embed = discord.Embed(
-            title="Now Playing 🎶",
-            description=f'**Music**:\n[{title}]({link})',
-            color=self.embedPurple
-        )
-        embed.add_field(name=f"Channel Author:\n{channel_author}", value="")
-        embed.add_field(name="Duration", value=duration, inline=False)
-        embed.set_thumbnail(url=thumbnail)
-        embed.set_footer(text=f'Song added by: {str(author)}', icon_url=avatar)
-        return embed
-    
-    
-    def added_to_queue_embed(self, interaction, song):
-        title = song['title']
-        link = song['link']
-        thumbnail = song['thumbnail']
-        duration = song['duration']
-        channel_author = song['channel_author']
-        author = interaction.user
-        avatar = author.avatar.url
-
-        embed = discord.Embed(
-            title="Song has been added to queue 🎶",
-            description=f'**Music**:\n[{title}]({link})',
-            color=self.embedPurple
-        )
-        
-        embed.add_field(name=f"Channel Author:\n{channel_author}", value="")
-        embed.add_field(name="Duration", value=duration, inline=False)
-        embed.set_thumbnail(url=thumbnail)
-        embed.set_footer(text=f'Song added by: {str(author)}', icon_url=avatar)
-        return embed
-        
-
-    async def start_playing(self, interaction: discord.Interaction, url: str):
-        voice_channel = interaction.user.voice.channel
-
-        if not voice_channel:
-            return await interaction.send("You are not connected to a voice channel.")
-
-        voice_client = interaction.guild.voice_client
-
-        if voice_client is None:
-            voice_client = await voice_channel.connect()
-        elif voice_client.channel != voice_channel:
-            return await interaction.send("The bot is already connected to a different voice channel.")
-
-        self.queue.append(url)
-
-        if not self.is_playing:
-            await self.play_next_song(interaction)
-
-
-    async def play_next_song(self, interaction: discord.Interaction):
-        if not self.queue:
-            self.is_playing = False
-            return
-
-        url = self.queue.pop(0)
-        await self.play_song(interaction, url)
-
-
-    async def play_song(self, interaction: discord.Interaction, url: str):
-        try:
-            self.is_playing = True
-            YDL_OPTIONS = {'format': 'bestaudio/best'}
-            FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                              'options': '-vn'}
-            with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
-                info = ydl.extract_info(url, download=False)
-                url2 = info['formats'][0]['url']
-                voice_client = interaction.guild.voice_client
-                voice_client.stop()
-                voice_client.play(discord.FFmpegPCMAudio(url2, **FFMPEG_OPTIONS), after=lambda e: self.after_playing(interaction))
-            
-        except Exception as e:
-            await interaction.send(f"Error: {str(e)}")
-
-
-    def after_playing(self, interaction):
-        coro = self.play_next_song(interaction)
-        fut = asyncio.run_coroutine_threadsafe(coro, self.client.loop)
-        try:
-            fut.result()
-        except:
-            pass
-
-
-    @app_commands.command(name="pause", description="Pause the current song.")
-    async def pause(self, interaction: discord.Interaction):
-        print("Pause command received.")
-        voice_client = interaction.guild.voice_client
-        if voice_client.is_playing():
-            voice_client.pause()
         else:
-            print("No song is currently playing.")
+            await interaction.response.send_message("You must be in a voice channel to use this command.")
 
 
-    @app_commands.command(name="resume", description="Resume the current song.")
-    async def resume(self, interaction: discord.Interaction):
-        print("Resume command received.")
-        voice_client = interaction.guild.voice_client
-        if voice_client.is_paused():
-            voice_client.resume()
+    @app_commands.command(name='queue', description='Display the current song queue.')
+    async def show_queue(self, interaction: discord.Interaction):
+        if len(self.queue) > 0:
+            queue_str = '\n'.join([f'{index + 1}. {song}' for index, song in enumerate(self.queue)])
+            await interaction.response.send_message(f'**Current Queue:**\n{queue_str}')
         else:
-            print("The song is not paused.")
+            await interaction.response.send_message('The queue is empty.')
 
+    @app_commands.command(name='skip', description='Skip the current song.')
+    async def skip(self, interaction: discord.Interaction):
+        if interaction.guild.voice_client is not None and interaction.guild.voice_client.is_playing():
+            interaction.guild.voice_client.stop()
+            await self.play_next(interaction)
+            await interaction.response.send_message("Skipped the current song")
 
-    @app_commands.command(name="queue", description="Display the current song queue.")
-    async def queue_command(self, interaction: discord.Interaction):
-        if not self.queue:
-            noqueue = discord.Embed(title="", description="There is no song in the queue", color=discord.Color.blue())
-            return await interaction.response.send_message(embed=noqueue)
-
-        queue_embed = discord.Embed(title="Song Queue", color=discord.Color.blue())
-
-        for i, url in enumerate(self.queue, start=1):
-            # Get information about the song for the queue embed
-            with youtube_dl.YoutubeDL({'format': 'bestaudio/best'}) as ydl:
-                info = ydl.extract_info(url, download=False)
-                song_info = {
-                    'title': info['title'],
-                    'channel': info['uploader'],
-                    'link': f"https://www.youtube.com/watch?v={info['id']}",
-                    'duration': self.format_duration(info['duration']),
-                }
-
-            # Add the song name with a clickable link and duration to the embed
-            queue_embed.add_field(
-                name=f"Song {i}:",
-                value=f"[**{song_info['title']}**]({song_info['link']})\nChannel: {song_info['channel']}\nDuration: {song_info['duration']}",
-                inline=False
-            )
-        
-        await interaction.response.send_message(embed=queue_embed)
-
+    @app_commands.command(name='leave', description='Make the bot leave the voice channel.')
+    async def leave(self, interaction: discord.Interaction):
+        if interaction.guild.voice_client is not None:
+            await interaction.guild.voice_client.disconnect()
+            self.queue = []
+            await interaction.response.send_message("I've been disconnected from the voice channel.", ephemeral=True)
     
     @app_commands.command(name='ytsearch', description='Search for YouTube link for the music bot')
     async def youtube_search_command(self, interaction: discord.Interaction, query: str):
@@ -263,5 +160,5 @@ class Music(commands.Cog):
         else:
             await interaction.response.send_message("No results found.")
 
-async def setup(client: commands.Bot) -> None:
+async def setup(client:commands.Bot) -> None:
     await client.add_cog(Music(client))
