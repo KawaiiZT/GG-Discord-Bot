@@ -12,7 +12,7 @@ class Tickets(commands.Cog):
     async def create_ticket_setup(self, interaction: Interaction):
         response_embed = discord.Embed(description="Creating ticket support menu, this might take a while...", color=discord.Color.greyple())
         await interaction.response.send_message(embed=response_embed, ephemeral=True)
-        categories = ["General Support", "Bug Support", "Feature Request", "Code Question"]
+        categories = ["General Support", "Bug Support", "Feature Request", "Code Question"] #Channel Categories
 
         # Check if the channel already exists
         channel_name = "ticket-submission"
