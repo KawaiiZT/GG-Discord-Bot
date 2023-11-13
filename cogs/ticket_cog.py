@@ -10,6 +10,8 @@ class Tickets(commands.Cog):
         self.client = client
 
     async def create_ticket_setup(self, interaction: Interaction):
+        response_embed = discord.Embed(description="Creating ticket support menu, this might take a while...", color=discord.Color.greyple())
+        await interaction.response.send_message(embed=response_embed, ephemeral=True)
         categories = ["General Support", "Bug Support", "Feature Request", "Code Question"]
 
         # Check if the channel already exists
@@ -29,8 +31,8 @@ class Tickets(commands.Cog):
 
             embed = discord.Embed(title="Ticket Submission", description=f"Please select your ticket category down below for {category_name}.", color=discord.Color.greyple())
             await channel.send(embed=embed, view=DropDown())
-
-        await interaction.response.send_message("Successfully set up the ticket system! Make sure you already have the `Staff` roles in the server before you use this function.", ephemeral=True)
+        success = discord.Embed(description="Successfully set up the ticket system! Make sure you already have the `Staff` roles in the server before you use this function.", color=discord.Color.green())
+        await interaction.edit_original_response(embed=success)
 
     @app_commands.command(name="ticketsetup", description="Sends the ticket prompt message.")
     @app_commands.default_permissions(manage_messages=True)
