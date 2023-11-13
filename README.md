@@ -11,6 +11,4 @@ GG Discord Bot is a study bot for discord application developed with python lang
 - นายไตรสิทธิ์ เจริญปริพัฒน์ - รหัสนักศึกษา 66070069
 - นายเกียรติศักดิ์ สกุลวันธนพัฒน์ - รหัสนักศึกษา 66070243
 
-# Still in progess
 This bot is for educational purposes and be used in project for PSCP subject\
-**This bot is still in working process**
