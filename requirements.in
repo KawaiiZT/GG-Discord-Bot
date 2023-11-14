@@ -3,6 +3,8 @@
 openai
 discord.py
 Flask
-youtube_dl
-urllib3
-PyNaCl
+pytube
+youtube-search-python
+yt_dlp
+re
+datetime

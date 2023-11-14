@@ -1,4 +1,4 @@
-import discord, pytube, asyncio, yt_dlp
+import discord, pytube, yt_dlp
 from discord import app_commands
 from discord.ext import commands
 from pytube import YouTube
